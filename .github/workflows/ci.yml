@@ -15,24 +15,16 @@ jobs:
         include:
           - os: windows-latest
             os_short: windows
-            compiler_cc: msvc-vs2022
-          - os: windows-2019
-            os_short: windows
-            compiler_cc: msvc-vs2019
+            compiler_cc: msvc
           - os: ubuntu-latest
             os_short: linux
             compiler_cc: clang
             compiler_cxx: clang++
-          - os: ubuntu-20.04
-            os_short: linux
-            compiler_cc: clang-6.0
-            compiler_cxx: clang++-6.0
-            compiler_install: clang-6.0
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os_short }}-${{ matrix.compiler_cc }}
     env:
-      SDKS: '["episode1","tf2","l4d2","csgo","dota"]'
+      SDKS: '["l4d2"]'
       DEPENDENCIES_FOLDER: dependencies
       DEPENDENCIES_ROOT: ${{ github.workspace }}/dependencies
     steps:
@@ -95,7 +87,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          python ../configure.py --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --hl2sdk-root=${{ env.DEPENDENCIES_ROOT }}
+          python ../configure.py --enable-optimize --sdks=${{ join(fromJSON(env.SDKS)) }} --targets=x86 --hl2sdk-root=${{ env.DEPENDENCIES_ROOT }}
           ambuild
 
       - name: Test SourceHook (Optimized)
@@ -131,3 +123,9 @@ jobs:
           if [ -d "${{ matrix.os_short }}-x86_64" ]; then
             ./${{ matrix.os_short }}-x86_64/test_sourcehook -v
           fi
+
+      - name: Uploading package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-l4d2-${{ matrix.os_short }}-${{ env.GITHUB_SHA_SHORT }}
+          path: metamod-source/build/package
